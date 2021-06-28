@@ -7,4 +7,5 @@ message UserLocal {
   string id = 1;
   string username = 2;
   string token = 3;
+  string refresh_token = 4;
 }

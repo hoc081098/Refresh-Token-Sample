@@ -5,12 +5,14 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import java.io.IOException
+import javax.inject.Inject
 
-class UserLocalSourceImpl(private val dataStore: DataStore<UserLocal>) : UserLocalSource {
+class UserLocalSourceImpl @Inject constructor(private val dataStore: DataStore<UserLocal>) :
+  UserLocalSource {
   override fun user(): Flow<UserLocal?> = dataStore.data
     .map {
-      @Suppress("USELESS_CAST")
-      it as UserLocal?
+      if (it == UserLocal.getDefaultInstance() || !it.isValid()) null
+      else it
     }
     .catch { cause: Throwable ->
       if (cause is IOException) {
@@ -24,3 +26,6 @@ class UserLocalSourceImpl(private val dataStore: DataStore<UserLocal>) : UserLoc
     dataStore.updateData { userLocal }
   }
 }
+
+private fun UserLocal.isValid(): Boolean =
+  id != null || username != null || token != null || refreshToken != null
