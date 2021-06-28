@@ -1,2 +1,2 @@
 rootProject.name = "Refresh Token Sample"
-include ':app'
+include(":app")
