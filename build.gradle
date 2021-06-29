@@ -1,0 +1,78 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+buildscript {
+    ext.kotlin_version = "1.5.10"
+    ext.hilt_version = '2.37'
+    ext.ktlint_version = '0.41.0'
+
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath "com.android.tools.build:gradle:4.2.1"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "com.google.dagger:hilt-android-gradle-plugin:$hilt_version"
+        classpath "com.diffplug.spotless:spotless-plugin-gradle:5.14.0"
+
+        // NOTE: Do not place your application dependencies here; they belong
+        // in the individual module build.gradle files
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        jcenter() // Warning: this repository is going to shut down soon
+        maven { url 'https://jitpack.io' }
+    }
+}
+
+subprojects {
+    apply plugin: "com.diffplug.spotless"
+
+    spotless {
+        kotlin {
+            target("**/*.kt")
+
+            ktlint(ktlint_version).userData(
+                    // TODO this should all come from editorconfig https://github.com/diffplug/spotless/issues/142
+                    [
+                            "indent_size" : "2",
+                            "kotlin_imports_layout" : "ascii"
+                    ]
+            )
+
+            trimTrailingWhitespace()
+            indentWithSpaces()
+            endWithNewline()
+        }
+
+        format("xml") {
+            target("**/res/**/*.xml")
+
+            trimTrailingWhitespace()
+            indentWithSpaces()
+            endWithNewline()
+        }
+
+        kotlinGradle {
+            target("**/*.gradle.kts", "*.gradle.kts")
+
+            ktlint(ktlint_version).userData(
+                    [
+                            "indent_size" : "2",
+                            "kotlin_imports_layout" : "ascii"
+                    ]
+            )
+
+            trimTrailingWhitespace()
+            indentWithSpaces()
+            endWithNewline()
+        }
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}

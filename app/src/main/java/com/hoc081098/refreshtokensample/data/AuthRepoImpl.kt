@@ -1,0 +1,61 @@
+package com.hoc081098.refreshtokensample.data
+
+import com.hoc081098.refreshtokensample.AppDispatchers
+import com.hoc081098.refreshtokensample.data.local.UserLocal
+import com.hoc081098.refreshtokensample.data.local.UserLocalSource
+import com.hoc081098.refreshtokensample.data.remote.ApiService
+import com.hoc081098.refreshtokensample.di.AppCoroutineScope
+import com.hoc081098.refreshtokensample.domain.AuthRepo
+import com.hoc081098.refreshtokensample.domain.User
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import javax.inject.Inject
+
+class AuthRepoImpl @Inject constructor(
+  private val userLocalSource: UserLocalSource,
+  private val appDispatchers: AppDispatchers,
+  private val apiService: ApiService,
+  @AppCoroutineScope private val appScope: CoroutineScope,
+) : AuthRepo {
+  init {
+    appScope.launch {
+      runCatching { apiService.checkAuth() }
+    }
+  }
+
+  private val userFlow by lazy {
+    userLocalSource
+      .user()
+      .map { userLocal ->
+        userLocal?.let {
+          User(
+            id = it.id!!,
+            username = it.username!!,
+          )
+        }
+      }
+      .distinctUntilChanged()
+  }
+
+  override fun user() = userFlow
+
+  override suspend fun login() = withContext(appDispatchers.io) {
+    val response = apiService.login()
+
+    userLocalSource.save(
+      UserLocal.newBuilder()
+        .setId(response.id)
+        .setUsername(response.username)
+        .setToken(response.token)
+        .setRefreshToken(response.refreshToken)
+        .build()
+    )
+  }
+
+  override suspend fun logout() = withContext(appDispatchers.io) {
+    userLocalSource.save(null)
+  }
+}

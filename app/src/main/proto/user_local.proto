@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+option java_package = "com.hoc081098.refreshtokensample.data.local";
+option java_multiple_files = true;
+
+message UserLocal {
+  string id = 1;
+  string username = 2;
+  string token = 3;
+  string refresh_token = 4;
+}
