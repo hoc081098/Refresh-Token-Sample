@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -86,7 +85,7 @@ class MainVM @Inject constructor(
 
     demoFlow = actionsFlow
       .filterIsInstance<MainAction.Demo>()
-      .flatMapLatest {
+      .flatMapMerge {
         demoRepo::demo.asFlow()
           .map { Lce.content(it) }
           .onStart { emit(Lce.loading()) }

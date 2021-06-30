@@ -11,6 +11,7 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Headers
 import retrofit2.http.POST
+import retrofit2.http.Query
 
 interface ApiService {
   @Headers("$CUSTOM_HEADER: $NO_AUTH")
@@ -25,7 +26,7 @@ interface ApiService {
   suspend fun checkAuth()
 
   @GET("demo")
-  suspend fun demo(): String
+  suspend fun demo(@Query("count") count: Int): String
 
   companion object Factory {
     operator fun invoke(retrofit: Retrofit): ApiService = retrofit.create()

@@ -16,7 +16,11 @@ const refreshExpiresIn = '1d';
 const refreshTokensMap = {};
 
 function checkToken(req) {
-  const [type, token] = req.headers.authorization.split(' ');
+  const authorization = req.headers.authorization;
+  if (!authorization) {
+    throw new Error('Require authorization header');
+  }
+  const [type, token] = authorization.split(' ');
   if (type === 'Bearer') {
     if (!token) {
       throw new Error('Require token in header');
@@ -132,8 +136,9 @@ router.get('/demo', async function (req, res, next) {
   } catch (e) {
     return res.status(401).json(e.message);
   }
-  await new Promise((resolve) => setTimeout(resolve, 500));
-  res.status(200).json(new Date().toISOString());
+  const count = req.query.count;
+  await new Promise((resolve) => setTimeout(resolve, 2000));
+  res.status(200).json('' + count + ' ' + (new Date().toISOString()));
 });
 
 module.exports = router;
