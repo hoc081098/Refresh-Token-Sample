@@ -17,12 +17,15 @@ interface ApiService {
   @POST("login")
   suspend fun login(@Body() loginBody: LoginBody): LoginResponse
 
-  @GET("check-auth")
-  suspend fun checkAuth()
-
   @Headers("$CUSTOM_HEADER: $NO_AUTH")
   @POST("refresh-token")
   suspend fun refreshToken(@Body() refreshToken: RefreshTokenBody): Response<RefreshTokenResponse>
+
+  @GET("check-auth")
+  suspend fun checkAuth()
+
+  @GET("demo")
+  suspend fun demo(): String
 
   companion object Factory {
     operator fun invoke(retrofit: Retrofit): ApiService = retrofit.create()

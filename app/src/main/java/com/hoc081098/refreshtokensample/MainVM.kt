@@ -6,6 +6,7 @@ import com.hoc081098.refreshtokensample.domain.AuthRepo
 import com.hoc081098.refreshtokensample.domain.DemoRepo
 import com.hoc081098.refreshtokensample.domain.User
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -15,10 +16,10 @@ import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.shareIn
@@ -34,11 +35,9 @@ sealed interface MainAction {
 sealed interface MainSingleEvent {
   data class LoginFailed(val throwable: Throwable) : MainSingleEvent
   data class LogoutFailed(val throwable: Throwable) : MainSingleEvent
-
-  data class DemoFailed(val throwable: Throwable) : MainSingleEvent
-  data class DemoSuccess(val result: String) : MainSingleEvent
 }
 
+@ExperimentalCoroutinesApi
 @FlowPreview
 @HiltViewModel
 class MainVM @Inject constructor(
@@ -54,6 +53,7 @@ class MainVM @Inject constructor(
       started = SharingStarted.Eagerly,
       initialValue = Lce.loading(),
     )
+  val demoFlow: StateFlow<Lce<String>>
 
   private val actions = Channel<MainAction>(Channel.UNLIMITED)
   private val events = Channel<MainSingleEvent>(Channel.UNLIMITED)
@@ -84,13 +84,18 @@ class MainVM @Inject constructor(
       }
       .launchIn(viewModelScope)
 
-    actionsFlow
+    demoFlow = actionsFlow
       .filterIsInstance<MainAction.Demo>()
-      .flatMapMerge {
+      .flatMapLatest {
         demoRepo::demo.asFlow()
-          .onEach { events.send(MainSingleEvent.DemoSuccess(it)) }
-          .catch { events.send(MainSingleEvent.DemoFailed(it)) }
+          .map { Lce.content(it) }
+          .onStart { emit(Lce.loading()) }
+          .catch { emit(Lce.error(it)) }
       }
-      .launchIn(viewModelScope)
+      .stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = Lce.loading(),
+      )
   }
 }

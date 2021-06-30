@@ -15,22 +15,29 @@ const refreshExpiresIn = '1d';
 
 const refreshTokensMap = {};
 
-router.get('/check-auth', function (req, res, next) {
+function checkToken(req) {
   const [type, token] = req.headers.authorization.split(' ');
   if (type === 'Bearer') {
     if (!token) {
-      return res.status(401).json({ message: 'Require token in header' });
+      throw new Error('Require token in header');
     }
 
     try {
-      jwt.verify(token, secret);
-      res.status(200).json({});
+      return jwt.verify(token, secret);
     } catch (e) {
       console.log({ e });
-      res.status(401).json({ message: 'Invalid token' });
+      throw new Error('Invalid token');
     }
   } else {
-    res.status(401).json({ message: 'Invalid authorization type' });
+    throw new Error('Invalid authorization type');
+  }
+}
+
+router.get('/check-auth', function (req, res, next) {
+  try {
+    res.status(200).json(checkToken(req));
+  } catch (e) {
+    res.status(401).json(e.message);
   }
 });
 
@@ -71,7 +78,7 @@ router.post('/login', function (req, res, next) {
   }
 });
 
-router.post('/refresh-token', function (req, res, next) {
+router.post('/refresh-token', async function (req, res, next) {
   const { refreshToken, username } = req.body;
 
   if (!refreshToken) {
@@ -100,6 +107,7 @@ router.post('/refresh-token', function (req, res, next) {
     id: payload.id,
   };
 
+  await new Promise((resolve) => setTimeout(resolve, 2000));
   console.log(`refresh-token ${JSON.stringify(payload)}`);
 
   try {
@@ -116,6 +124,16 @@ router.post('/refresh-token', function (req, res, next) {
     console.log({ e });
     return res.status(500).json({ message: 'Server error' });
   }
+});
+
+router.get('/demo', async function (req, res, next) {
+  try {
+    checkToken(req);
+  } catch (e) {
+    return res.status(401).json(e.message);
+  }
+  await new Promise((resolve) => setTimeout(resolve, 500));
+  res.status(200).json(new Date().toISOString());
 });
 
 module.exports = router;

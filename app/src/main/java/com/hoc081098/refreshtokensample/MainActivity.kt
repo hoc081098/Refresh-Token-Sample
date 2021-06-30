@@ -7,8 +7,10 @@ import androidx.appcompat.app.AppCompatActivity
 import com.hoc081098.refreshtokensample.databinding.ActivityMainBinding
 import com.hoc081098.viewbindingdelegate.viewBinding
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 
+@ExperimentalCoroutinesApi
 @FlowPreview
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity(R.layout.activity_main) {
@@ -45,6 +47,13 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
           Toast.LENGTH_SHORT
         ).show()
         else -> error("Missing case $it")
+      }
+    }
+    vm.demoFlow.collectIn(this) {
+      binding.textDemo.text = when (it) {
+        is Lce.Content -> it.content
+        is Lce.Error -> "Error: ${it.exception}"
+        Lce.Loading -> "Loading..."
       }
     }
 
