@@ -3,10 +3,12 @@ package com.hoc081098.refreshtokensample
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.hoc081098.refreshtokensample.domain.AuthRepo
+import com.hoc081098.refreshtokensample.domain.DemoRepo
 import com.hoc081098.refreshtokensample.domain.User
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asFlow
@@ -16,7 +18,9 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
@@ -24,12 +28,22 @@ import javax.inject.Inject
 sealed interface MainAction {
   object Logout : MainAction
   object Login : MainAction
+  object Demo : MainAction
+}
+
+sealed interface MainSingleEvent {
+  data class LoginFailed(val throwable: Throwable) : MainSingleEvent
+  data class LogoutFailed(val throwable: Throwable) : MainSingleEvent
+
+  data class DemoFailed(val throwable: Throwable) : MainSingleEvent
+  data class DemoSuccess(val result: String) : MainSingleEvent
 }
 
 @FlowPreview
 @HiltViewModel
 class MainVM @Inject constructor(
-  private val repo: AuthRepo
+  private val repo: AuthRepo,
+  private val demoRepo: DemoRepo,
 ) : ViewModel() {
   val userFlow: StateFlow<Lce<User?>> = repo.user()
     .map { Lce.content(it) }
@@ -42,10 +56,13 @@ class MainVM @Inject constructor(
     )
 
   private val actions = Channel<MainAction>(Channel.UNLIMITED)
+  private val events = Channel<MainSingleEvent>(Channel.UNLIMITED)
 
   fun dispatch(action: MainAction) {
     actions.trySend(action)
   }
+
+  val eventFlow: Flow<MainSingleEvent> get() = events.receiveAsFlow()
 
   init {
     val actionsFlow =
@@ -53,12 +70,27 @@ class MainVM @Inject constructor(
 
     actionsFlow
       .filterIsInstance<MainAction.Logout>()
-      .flatMapMerge { repo::logout.asFlow() }
+      .flatMapMerge {
+        repo::logout.asFlow()
+          .catch { events.send(MainSingleEvent.LogoutFailed(it)) }
+      }
       .launchIn(viewModelScope)
 
     actionsFlow
       .filterIsInstance<MainAction.Login>()
-      .flatMapMerge { repo::login.asFlow() }
+      .flatMapMerge {
+        repo::login.asFlow()
+          .catch { events.send(MainSingleEvent.LoginFailed(it)) }
+      }
+      .launchIn(viewModelScope)
+
+    actionsFlow
+      .filterIsInstance<MainAction.Demo>()
+      .flatMapMerge {
+        demoRepo::demo.asFlow()
+          .onEach { events.send(MainSingleEvent.DemoSuccess(it)) }
+          .catch { events.send(MainSingleEvent.DemoFailed(it)) }
+      }
       .launchIn(viewModelScope)
   }
 }

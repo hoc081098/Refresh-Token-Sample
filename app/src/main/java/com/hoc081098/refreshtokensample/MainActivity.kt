@@ -1,6 +1,7 @@
 package com.hoc081098.refreshtokensample
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import com.hoc081098.refreshtokensample.databinding.ActivityMainBinding
@@ -31,6 +32,21 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
       }
       binding.buttonLogoutLogin.isEnabled = binding.buttonLogoutLogin.text !== null
     }
+    vm.eventFlow.collectIn(this) {
+      when (it) {
+        is MainSingleEvent.LoginFailed -> Toast.makeText(
+          this,
+          "Login failed: ${it.throwable.message}",
+          Toast.LENGTH_SHORT
+        ).show()
+        is MainSingleEvent.LogoutFailed -> Toast.makeText(
+          this,
+          "Logout failed: ${it.throwable.message}",
+          Toast.LENGTH_SHORT
+        ).show()
+        else -> error("Missing case $it")
+      }
+    }
 
     binding.buttonLogoutLogin.setOnClickListener {
       if (binding.buttonLogoutLogin.text == "Login") {
@@ -38,6 +54,10 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
       } else {
         vm.dispatch(MainAction.Logout)
       }
+    }
+
+    binding.button.setOnClickListener {
+      vm.dispatch(MainAction.Demo)
     }
   }
 }

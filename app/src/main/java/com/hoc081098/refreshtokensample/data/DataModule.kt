@@ -15,6 +15,7 @@ import com.hoc081098.refreshtokensample.data.remote.interceptor.AuthInterceptor
 import com.hoc081098.refreshtokensample.data.remote.response.LoginResponse
 import com.hoc081098.refreshtokensample.data.remote.response.RefreshTokenResponse
 import com.hoc081098.refreshtokensample.domain.AuthRepo
+import com.hoc081098.refreshtokensample.domain.DemoRepo
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.adapter
@@ -43,6 +44,9 @@ abstract class DataModule {
   @Binds
   @Singleton
   abstract fun authRepo(impl: AuthRepoImpl): AuthRepo
+
+  @Binds
+  abstract fun demoRepo(impl: DemoRepoImpl): DemoRepo
 
   @Binds
   @Singleton
