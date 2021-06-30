@@ -1,7 +1,7 @@
 # Refresh Token Sample
 
 - When multiple request hits 404 (HTTP_UNAUTHORIZED), single "Refresh token request" will be executed.
-- After refresh successfully, all pending request will be executed sequentially.
+- After refresh successfully, all pending request will be executed concurrency.
 
 # Run local server
 ```
