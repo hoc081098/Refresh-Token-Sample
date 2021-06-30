@@ -41,7 +41,7 @@ router.get('/check-auth', function (req, res, next) {
   try {
     res.status(200).json(checkToken(req));
   } catch (e) {
-    res.status(401).json(e.message);
+    res.status(401).json({ message: e.message });
   }
 });
 
@@ -134,7 +134,7 @@ router.get('/demo', async function (req, res, next) {
   try {
     checkToken(req);
   } catch (e) {
-    return res.status(401).json(e.message);
+    return res.status(401).json({ message: e.message });
   }
   const count = req.query.count;
   await new Promise((resolve) => setTimeout(resolve, 2000));
