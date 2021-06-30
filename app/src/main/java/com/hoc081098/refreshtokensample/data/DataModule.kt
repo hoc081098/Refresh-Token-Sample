@@ -12,7 +12,6 @@ import com.hoc081098.refreshtokensample.data.local.UserLocalSource
 import com.hoc081098.refreshtokensample.data.local.UserLocalSourceImpl
 import com.hoc081098.refreshtokensample.data.remote.ApiService
 import com.hoc081098.refreshtokensample.data.remote.interceptor.AuthInterceptor
-import com.hoc081098.refreshtokensample.data.remote.interceptor.FakeApiInterceptor
 import com.hoc081098.refreshtokensample.data.remote.response.LoginResponse
 import com.hoc081098.refreshtokensample.data.remote.response.RefreshTokenResponse
 import com.hoc081098.refreshtokensample.domain.AuthRepo
@@ -26,13 +25,10 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import dagger.multibindings.IntoSet
-import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
-import timber.log.Timber
 import java.util.concurrent.TimeUnit
 import javax.inject.Qualifier
 import javax.inject.Singleton
@@ -90,7 +86,6 @@ abstract class DataModule {
     @Singleton
     fun client(
       authInterceptor: AuthInterceptor,
-      fakeApiInterceptor: FakeApiInterceptor,
       httpLoggingInterceptor: HttpLoggingInterceptor,
     ): OkHttpClient =
       OkHttpClient.Builder()
@@ -98,13 +93,12 @@ abstract class DataModule {
         .readTimeout(15, TimeUnit.SECONDS)
         .writeTimeout(15, TimeUnit.SECONDS)
         .addInterceptor(authInterceptor)
-        .addInterceptor(fakeApiInterceptor)
         .addInterceptor(httpLoggingInterceptor)
         .build()
 
     @Provides
     @BaseUrl
-    fun baseUrl(): String = "https://hoc081098.com"
+    fun baseUrl(): String = "http://10.0.0.169:3000/"
 
     @Provides
     @Singleton

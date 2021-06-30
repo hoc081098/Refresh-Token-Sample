@@ -25,45 +25,63 @@ class AuthInterceptor @Inject constructor(
   private val mutex = Mutex()
 
   override fun intercept(chain: Interceptor.Chain): Response {
-    val req = chain.request()
+    val req = chain.request().also { Timber.d("[1] $it") }
 
     if (NO_AUTH in req.headers.values(CUSTOM_HEADER)) {
       return chain.proceedWithToken(req, null)
     }
 
-    val token = runBlocking { userLocalSource.user().first() }?.token.also { Timber.d("Token=$it") }
+    val token =
+      runBlocking { userLocalSource.user().first() }?.token.also { Timber.d("[2] $req $it") }
     val res = chain.proceedWithToken(req, token)
 
-    if (res.code != HTTP_UNAUTHORIZED) {
+    if (res.code != HTTP_UNAUTHORIZED || token == null) {
       return res
     }
 
-    return runBlocking {
-      Timber.d("Start $req")
+    Timber.d("[3] $req")
 
+    return runBlocking {
       mutex.withLock {
-        val user = userLocalSource.user().first()
+        val user =
+          userLocalSource.user().first().also { Timber.d("[4] $req $it") }
+        val maybeUpdatedToken = user?.token
+
         when {
-          user == null -> res
-          user.token != token -> chain.proceedWithToken(req, user.token)
+          user == null || maybeUpdatedToken == null -> res.also { Timber.d("[5-1] $req") } // already logged out!
+          maybeUpdatedToken != token -> chain.proceedWithToken(
+            req,
+            maybeUpdatedToken
+          ).also { Timber.d("[5-2] $req") } // refreshed by another request
           else -> {
+            Timber.d("[5-3] $req")
+
             val refreshTokenRes =
-              apiService.get().refreshToken(RefreshTokenBody(user.refreshToken))
+              apiService.get().refreshToken(RefreshTokenBody(user.refreshToken, user.username)).also {
+                Timber.d("[6] $req $it")
+              }
             val updatedToken = refreshTokenRes.body()?.token
 
-            if (refreshTokenRes.code() == HTTP_OK && updatedToken != null) {
+            val code = refreshTokenRes.code()
+            if (code == HTTP_OK && updatedToken != null) {
+              Timber.d("[7-1] $req")
               userLocalSource.save(
                 user.toBuilder()
                   .setToken(updatedToken)
                   .build()
               )
               chain.proceedWithToken(req, updatedToken)
+            } else if (code == HTTP_UNAUTHORIZED) {
+              Timber.d("[7-2] $req")
+              userLocalSource.save(null)
+              res
             } else {
+              Timber.d("[7-3] $req")
               res
             }
           }
         }
-      }.also { Timber.d("Done $req") }
+      }.also { Timber.d("[8] $req") }
     }
   }
 

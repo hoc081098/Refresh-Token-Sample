@@ -4,6 +4,7 @@ import com.hoc081098.refreshtokensample.AppDispatchers
 import com.hoc081098.refreshtokensample.data.local.UserLocal
 import com.hoc081098.refreshtokensample.data.local.UserLocalSource
 import com.hoc081098.refreshtokensample.data.remote.ApiService
+import com.hoc081098.refreshtokensample.data.remote.body.LoginBody
 import com.hoc081098.refreshtokensample.di.AppCoroutineScope
 import com.hoc081098.refreshtokensample.domain.AuthRepo
 import com.hoc081098.refreshtokensample.domain.User
@@ -43,7 +44,12 @@ class AuthRepoImpl @Inject constructor(
   override fun user() = userFlow
 
   override suspend fun login() = withContext(appDispatchers.io) {
-    val response = apiService.login()
+    val response = apiService.login(
+      LoginBody(
+        username = "hoc081098",
+        password = "123456",
+      ),
+    )
 
     userLocalSource.save(
       UserLocal.newBuilder()
