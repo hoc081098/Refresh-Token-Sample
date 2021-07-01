@@ -2,7 +2,7 @@ plugins {
     id 'com.android.application'
     id 'kotlin-android'
     id 'kotlin-kapt'
-    id "com.google.protobuf" version "0.8.16"
+    id "com.google.protobuf" version "3.17.3"
     id "dagger.hilt.android.plugin"
 }
 
@@ -81,7 +81,7 @@ kapt {
 
 protobuf {
     protoc {
-        artifact = "com.google.protobuf:protoc:3.11.0"
+        artifact = "com.google.protobuf:protoc:3.17.3"
     }
 
     // Generates the java Protobuf-lite code for the Protobufs in this project. See
