@@ -2,7 +2,7 @@ plugins {
     id 'com.android.application'
     id 'kotlin-android'
     id 'kotlin-kapt'
-    id "com.google.protobuf" version "0.8.16"
+    id "com.google.protobuf" version "3.17.3"
     id "dagger.hilt.android.plugin"
 }
 
@@ -61,7 +61,7 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.0'
 
     implementation 'androidx.datastore:datastore:1.0.0-rc01'
-    implementation 'com.google.protobuf:protobuf-javalite:3.11.0'
+    implementation 'com.google.protobuf:protobuf-javalite:3.17.3'
 
     implementation "com.google.dagger:hilt-android:$hilt_version"
     kapt "com.google.dagger:hilt-android-compiler:$hilt_version"
