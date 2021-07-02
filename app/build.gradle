@@ -2,7 +2,7 @@ plugins {
     id 'com.android.application'
     id 'kotlin-android'
     id 'kotlin-kapt'
-    id "com.google.protobuf" version "3.17.3"
+    id "com.google.protobuf" version "0.8.16"
     id "dagger.hilt.android.plugin"
 }
 
