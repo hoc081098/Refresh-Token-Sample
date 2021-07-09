@@ -61,14 +61,13 @@ class AuthInterceptor @Inject constructor(
 
             val code = refreshTokenRes.code()
             if (code == HTTP_OK) {
-              refreshTokenRes.body()?.token?.let {
+              refreshTokenRes.body()?.token?.also {
                 Timber.d("[7-1] $req")
                 userLocalSource.save(
                   user.toBuilder()
                     .setToken(it)
                     .build()
                 )
-                it
               }
             } else if (code == HTTP_UNAUTHORIZED) {
               Timber.d("[7-2] $req")
