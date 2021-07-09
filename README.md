@@ -1,5 +1,7 @@
 # Refresh Token Sample
 
+Android Refresh token with Retrofit and OkHttp
+
 - When multiple requests hit **404** (_HTTP_UNAUTHORIZED_), only single `Refresh token request` will be executed.
 - After successful refresh, all pending requests will be executed concurrently.
 
