@@ -66,7 +66,7 @@ dependencies {
     implementation "com.google.dagger:hilt-android:$hilt_version"
     kapt "com.google.dagger:hilt-android-compiler:$hilt_version"
 
-    implementation 'com.github.hoc081098:ViewBindingDelegate:1.0.0'
+    implementation 'com.github.hoc081098:ViewBindingDelegate:1.1.0'
     implementation 'com.jakewharton.timber:timber:4.7.1'
 }
 
