@@ -9,17 +9,26 @@ import java.io.InputStream
 import java.io.OutputStream
 import javax.inject.Inject
 
-class UserLocalSerializer @Inject constructor() : Serializer<UserLocal> {
+class UserLocalSerializer @Inject constructor(
+  private val crypto: Crypto
+) : Serializer<UserLocal> {
   override val defaultValue: UserLocal
     get() = UserLocal.getDefaultInstance()
 
   override suspend fun readFrom(input: InputStream): UserLocal {
     return try {
-      UserLocal.parseFrom(input)
+      UserLocal.parseFrom(
+        input
+          .readBytes()
+          .let(crypto::decrypt)
+      )
     } catch (e: InvalidProtocolBufferException) {
       throw CorruptionException("Cannot read proto.", e)
     }
   }
 
-  override suspend fun writeTo(t: UserLocal, output: OutputStream) = t.writeTo(output)
+  override suspend fun writeTo(t: UserLocal, output: OutputStream) {
+    output.write(crypto.encrypt(t.toByteArray()))
+    output.flush()
+  }
 }
