@@ -4,6 +4,8 @@
 - When multiple requests hit **401** (_HTTP_UNAUTHORIZED_), only single `Refresh token request` will be executed.
 - After successful refresh, all pending requests will be executed concurrently.
 
+[![Build CI](https://github.com/hoc081098/Refresh-Token-Sample/actions/workflows/build.yml/badge.svg)](https://github.com/hoc081098/Refresh-Token-Sample/actions/workflows/build.yml)
+
 ## Features
 
 - ✅ Refresh token only once for multiple requests
