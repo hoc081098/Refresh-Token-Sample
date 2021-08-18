@@ -6,6 +6,8 @@ import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.core.Serializer
 import androidx.datastore.dataStoreFile
 import com.hoc081098.refreshtokensample.BuildConfig
+import com.hoc081098.refreshtokensample.data.local.Crypto
+import com.hoc081098.refreshtokensample.data.local.CryptoImpl
 import com.hoc081098.refreshtokensample.data.local.UserLocal
 import com.hoc081098.refreshtokensample.data.local.UserLocalSerializer
 import com.hoc081098.refreshtokensample.data.local.UserLocalSource
@@ -55,6 +57,9 @@ abstract class DataModule {
   @Binds
   @Singleton
   abstract fun userLocalSerializer(impl: UserLocalSerializer): Serializer<UserLocal>
+
+  @Binds
+  abstract fun crypto(impl: CryptoImpl): Crypto
 
   internal companion object {
     @Provides
