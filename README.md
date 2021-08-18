@@ -3,6 +3,8 @@
 - Android Refresh token with Retrofit, OkHttp and Coroutines Mutex.
 - When multiple requests hit **401** (_HTTP_UNAUTHORIZED_), only single `Refresh token request` will be executed.
 - After successful refresh, all pending requests will be executed concurrently.
+- Store user and token using [Proto DataStore from Jetpack](https://developer.android.com/topic/libraries/architecture/datastore).
+- This example app shows how you can encrypt your data when using [Proto DataStore from Jetpack](https://developer.android.com/topic/libraries/architecture/datastore).
 
 [![Build CI](https://github.com/hoc081098/Refresh-Token-Sample/actions/workflows/build.yml/badge.svg)](https://github.com/hoc081098/Refresh-Token-Sample/actions/workflows/build.yml)
 
