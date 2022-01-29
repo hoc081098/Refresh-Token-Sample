@@ -6,7 +6,11 @@
 - Store user and token using [Proto DataStore from Jetpack](https://developer.android.com/topic/libraries/architecture/datastore).
 - This example app shows how you can encrypt your data when using [Proto DataStore from Jetpack](https://developer.android.com/topic/libraries/architecture/datastore).
 
+[![API](https://img.shields.io/badge/API-23%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=23)
+[![Kotlin](https://img.shields.io/badge/kotlin-1.6.10-orange.svg?logo=kotlin)](http://kotlinlang.org)
 [![Build CI](https://github.com/hoc081098/Refresh-Token-Sample/actions/workflows/build.yml/badge.svg)](https://github.com/hoc081098/Refresh-Token-Sample/actions/workflows/build.yml)
+[![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fhoc081098%2FRefresh-Token-Sample&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false)](https://hits.seeyoufarm.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](https://opensource.org/licenses/MIT)
 
 ## Features
 
