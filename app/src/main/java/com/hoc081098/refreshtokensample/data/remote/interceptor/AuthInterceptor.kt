@@ -10,11 +10,11 @@ import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response
+import timber.log.Timber
 import java.net.HttpURLConnection.HTTP_OK
 import java.net.HttpURLConnection.HTTP_UNAUTHORIZED
 import javax.inject.Inject
 import javax.inject.Provider
-import timber.log.Timber.Forest.d as debug
 
 class AuthInterceptor @Inject constructor(
   private val userLocalSource: UserLocalSource,
@@ -29,7 +29,7 @@ class AuthInterceptor @Inject constructor(
 
     val token = runBlocking { userLocalSource.user().first() }
       ?.token
-      .also { debug("[2] READ TOKEN token=$it, url=${request.url}") }
+      .also { debug("[2] READ TOKEN token=${it.firstTwoCharactersAndLastTwoCharacters()}, url=${request.url}") }
     val response = chain.proceedWithToken(request, token)
 
     if (response.code != HTTP_UNAUTHORIZED || token == null) {
@@ -47,12 +47,12 @@ class AuthInterceptor @Inject constructor(
 
   private fun executeTokenRefreshing(request: Request, token: String?): String? {
     val requestUrl = request.url
-    debug("[3] BEFORE REFRESHING token=$token, url=$requestUrl")
+    debug("[3] BEFORE REFRESHING token=${token.firstTwoCharactersAndLastTwoCharacters()}, url=$requestUrl")
 
     return runBlocking {
       userLocalSource.update { currentUserLocal ->
         val maybeUpdatedToken = currentUserLocal?.token
-        debug("[4] INSIDE REFRESHING maybeUpdatedToken=$maybeUpdatedToken, url=$requestUrl")
+        debug("[4] INSIDE REFRESHING maybeUpdatedToken=${maybeUpdatedToken.firstTwoCharactersAndLastTwoCharacters()}, url=$requestUrl")
 
         when {
           maybeUpdatedToken == null ->
@@ -71,7 +71,6 @@ class AuthInterceptor @Inject constructor(
                   username = currentUserLocal.username
                 )
               )
-              .also { debug("[6] DONE REFRESHING REQUEST status=${it.code()}, url=$requestUrl") }
 
             when (val code = refreshTokenRes.code()) {
               HTTP_OK -> {
@@ -79,15 +78,13 @@ class AuthInterceptor @Inject constructor(
                   .toBuilder()
                   .setToken(refreshTokenRes.body()!!.token)
                   .build()
-                  .also { debug("[7-1] REFRESH SUCCESSFULLY newToken=${it.token}, url=$requestUrl") }
+                  .also { debug("[6-1] REFRESH SUCCESSFULLY newToken=${it.token.firstTwoCharactersAndLastTwoCharacters()}, url=$requestUrl") }
               }
-              HTTP_UNAUTHORIZED -> {
-                debug("[7-2] REFRESH FAILED HTTP_UNAUTHORIZED url=$requestUrl")
-                null
+              HTTP_UNAUTHORIZED -> null.also {
+                debug("[6-2] REFRESH FAILED HTTP_UNAUTHORIZED url=$requestUrl")
               }
-              else -> {
-                debug("[7-3] REFRESH FAILED code=$code, url=$requestUrl")
-                currentUserLocal
+              else -> currentUserLocal.also {
+                debug("[6-3] REFRESH FAILED code=$code, url=$requestUrl")
               }
             }
           }
@@ -106,4 +103,14 @@ class AuthInterceptor @Inject constructor(
       .removeHeader(CUSTOM_HEADER)
       .build()
       .let(::proceed)
+}
+
+@Suppress("NOTHING_TO_INLINE")
+private inline fun debug(message: String) =
+  Timber.tag(AuthInterceptor::class.java.simpleName).d(message)
+
+@Suppress("NOTHING_TO_INLINE")
+private inline fun String?.firstTwoCharactersAndLastTwoCharacters(): String? {
+  this ?: return null
+  return if (length <= 4) this else "${take(2)}...${takeLast(2)}"
 }
