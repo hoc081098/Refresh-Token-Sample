@@ -38,6 +38,7 @@ import javax.inject.Singleton
 
 @Retention(AnnotationRetention.BINARY)
 @Qualifier
+@MustBeDocumented
 annotation class BaseUrl
 
 @Module
@@ -107,7 +108,7 @@ abstract class DataModule {
 
     @Provides
     @BaseUrl
-    fun baseUrl(): String = "http://192.168.0.5:3000/"
+    fun baseUrl(): String = "http://10.0.2.2:3000/"
 
     @Provides
     @Singleton
