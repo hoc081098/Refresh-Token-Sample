@@ -7,82 +7,93 @@ import com.hoc081098.refreshtokensample.data.remote.ApiService.Factory.NO_AUTH
 import com.hoc081098.refreshtokensample.data.remote.body.RefreshTokenBody
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response
-import timber.log.Timber
 import java.net.HttpURLConnection.HTTP_OK
 import java.net.HttpURLConnection.HTTP_UNAUTHORIZED
 import javax.inject.Inject
 import javax.inject.Provider
+import timber.log.Timber.Forest.d as debug
 
 class AuthInterceptor @Inject constructor(
   private val userLocalSource: UserLocalSource,
   private val apiService: Provider<ApiService>,
 ) : Interceptor {
-  private val mutex = Mutex()
-
   override fun intercept(chain: Interceptor.Chain): Response {
-    val req = chain.request().also { Timber.d("[1] $it") }
+    val request = chain.request().also { debug("[1] START url=${it.url}") }
 
-    if (NO_AUTH in req.headers.values(CUSTOM_HEADER)) {
-      return chain.proceedWithToken(req, null)
+    if (NO_AUTH in request.headers.values(CUSTOM_HEADER)) {
+      return chain.proceedWithToken(request, null)
     }
 
-    val token =
-      runBlocking { userLocalSource.user().first() }?.token.also { Timber.d("[2] $req $it") }
-    val res = chain.proceedWithToken(req, token)
+    val token = runBlocking { userLocalSource.user().first() }
+      ?.token
+      .also { debug("[2] READ TOKEN token=$it, url=${request.url}") }
+    val response = chain.proceedWithToken(request, token)
 
-    if (res.code != HTTP_UNAUTHORIZED || token == null) {
-      return res
+    if (response.code != HTTP_UNAUTHORIZED || token == null) {
+      return response
     }
 
-    Timber.d("[3] $req")
+    val newToken = executeTokenRefreshing(request, token)
 
-    val newToken: String? = runBlocking {
-      mutex.withLock {
-        val user =
-          userLocalSource.user().first().also { Timber.d("[4] $req $it") }
-        val maybeUpdatedToken = user?.token
+    return if (newToken !== null && newToken != token) {
+      chain.proceedWithToken(request, newToken)
+    } else {
+      response
+    }
+  }
+
+  private fun executeTokenRefreshing(request: Request, token: String?): String? {
+    val requestUrl = request.url
+    debug("[3] BEFORE REFRESHING token=$token, url=$requestUrl")
+
+    return runBlocking {
+      userLocalSource.update { currentUserLocal ->
+        val maybeUpdatedToken = currentUserLocal?.token
+        debug("[4] INSIDE REFRESHING maybeUpdatedToken=$maybeUpdatedToken, url=$requestUrl")
 
         when {
-          user == null || maybeUpdatedToken == null -> null.also { Timber.d("[5-1] $req") } // already logged out!
-          maybeUpdatedToken != token -> maybeUpdatedToken.also { Timber.d("[5-2] $req") } // refreshed by another request
+          maybeUpdatedToken == null ->
+            null
+              .also { debug("[5-1] LOGGED OUT url=$requestUrl") } // already logged out!
+          maybeUpdatedToken != token ->
+            currentUserLocal
+              .also { debug("[5-2] REFRESHED BY ANOTHER url=$requestUrl") } // refreshed by another request
           else -> {
-            Timber.d("[5-3] $req")
+            debug("[5-3] START REFRESHING REQUEST url=$requestUrl")
 
-            val refreshTokenRes =
-              apiService.get().refreshToken(RefreshTokenBody(user.refreshToken, user.username))
-                .also {
-                  Timber.d("[6] $req $it")
-                }
-
-            val code = refreshTokenRes.code()
-            if (code == HTTP_OK) {
-              refreshTokenRes.body()?.token?.also {
-                Timber.d("[7-1] $req")
-                userLocalSource.save(
-                  user.toBuilder()
-                    .setToken(it)
-                    .build()
+            val refreshTokenRes = apiService.get()
+              .refreshToken(
+                RefreshTokenBody(
+                  refreshToken = currentUserLocal.refreshToken,
+                  username = currentUserLocal.username
                 )
+              )
+              .also { debug("[6] DONE REFRESHING REQUEST status=${it.code()}, url=$requestUrl") }
+
+            when (val code = refreshTokenRes.code()) {
+              HTTP_OK -> {
+                currentUserLocal
+                  .toBuilder()
+                  .setToken(refreshTokenRes.body()!!.token)
+                  .build()
+                  .also { debug("[7-1] REFRESH SUCCESSFULLY newToken=${it.token}, url=$requestUrl") }
               }
-            } else if (code == HTTP_UNAUTHORIZED) {
-              Timber.d("[7-2] $req")
-              userLocalSource.save(null)
-              null
-            } else {
-              Timber.d("[7-3] $req")
-              null
+              HTTP_UNAUTHORIZED -> {
+                debug("[7-2] REFRESH FAILED HTTP_UNAUTHORIZED url=$requestUrl")
+                null
+              }
+              else -> {
+                debug("[7-3] REFRESH FAILED code=$code, url=$requestUrl")
+                currentUserLocal
+              }
             }
           }
         }
-      }
+      }?.token
     }
-
-    return if (newToken !== null) chain.proceedWithToken(req, newToken) else res
   }
 
   private fun Interceptor.Chain.proceedWithToken(req: Request, token: String?): Response =

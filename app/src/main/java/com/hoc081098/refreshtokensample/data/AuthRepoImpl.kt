@@ -51,17 +51,20 @@ class AuthRepoImpl @Inject constructor(
       ),
     )
 
-    userLocalSource.save(
+    userLocalSource.update {
       UserLocal.newBuilder()
         .setId(response.id)
         .setUsername(response.username)
         .setToken(response.token)
         .setRefreshToken(response.refreshToken)
         .build()
-    )
+    }
+
+    Unit
   }
 
   override suspend fun logout() = withContext(appDispatchers.io) {
-    userLocalSource.save(null)
+    userLocalSource.update { null }
+    Unit
   }
 }

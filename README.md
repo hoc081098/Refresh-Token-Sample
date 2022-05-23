@@ -26,4 +26,5 @@ npm i
 npm run start
 ```
 
-Change `baseUrl` at `app/src/main/java/com/hoc081098/refreshtokensample/data/DataModule.kt`
+- Change `baseUrl` (e.g. `http://YOUR_ID_ADDRESS:3000/`) at `app/src/main/java/com/hoc081098/refreshtokensample/data/DataModule.kt`
+- Change `expiresIn` (default value is 1 minute) at `server/routes/index.js`.
