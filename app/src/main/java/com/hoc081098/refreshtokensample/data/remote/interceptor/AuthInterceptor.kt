@@ -64,9 +64,7 @@ class AuthInterceptor @Inject constructor(
               refreshTokenRes.body()?.token?.also { token ->
                 Timber.d("[7-1] $req")
                 userLocalSource.update {
-                  check(it == user)
-
-                  user.toBuilder()
+                  (it ?: user).toBuilder()
                     .setToken(token)
                     .build()
                 }
