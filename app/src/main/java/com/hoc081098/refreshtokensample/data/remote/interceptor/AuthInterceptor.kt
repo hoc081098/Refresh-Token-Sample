@@ -1,5 +1,6 @@
 package com.hoc081098.refreshtokensample.data.remote.interceptor
 
+import com.hoc081098.refreshtokensample.AppDispatchers
 import com.hoc081098.refreshtokensample.data.local.UserLocalSource
 import com.hoc081098.refreshtokensample.data.remote.ApiService
 import com.hoc081098.refreshtokensample.data.remote.ApiService.Factory.CUSTOM_HEADER
@@ -19,6 +20,7 @@ import javax.inject.Provider
 class AuthInterceptor @Inject constructor(
   private val userLocalSource: UserLocalSource,
   private val apiService: Provider<ApiService>,
+  private val appDispatchers: AppDispatchers,
 ) : Interceptor {
   override fun intercept(chain: Interceptor.Chain): Response {
     val request = chain.request().also { debug("[1] START url=${it.url}") }
@@ -49,7 +51,7 @@ class AuthInterceptor @Inject constructor(
     val requestUrl = request.url
     debug("[3] BEFORE REFRESHING token=${token.firstTwoCharactersAndLastTwoCharacters()}, url=$requestUrl")
 
-    return runBlocking {
+    return runBlocking(appDispatchers.io) {
       userLocalSource.update { currentUserLocal ->
         val maybeUpdatedToken = currentUserLocal?.token
         debug("[4] INSIDE REFRESHING maybeUpdatedToken=${maybeUpdatedToken.firstTwoCharactersAndLastTwoCharacters()}, url=$requestUrl")
