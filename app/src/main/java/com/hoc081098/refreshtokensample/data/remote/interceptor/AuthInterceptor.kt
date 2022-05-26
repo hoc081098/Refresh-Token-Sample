@@ -1,6 +1,7 @@
 package com.hoc081098.refreshtokensample.data.remote.interceptor
 
 import com.hoc081098.refreshtokensample.AppDispatchers
+import com.hoc081098.refreshtokensample.data.local.UserLocal
 import com.hoc081098.refreshtokensample.data.local.UserLocalSource
 import com.hoc081098.refreshtokensample.data.remote.ApiService
 import com.hoc081098.refreshtokensample.data.remote.ApiService.Factory.CUSTOM_HEADER
@@ -66,13 +67,9 @@ class AuthInterceptor @Inject constructor(
           else -> {
             debug("[5-3] START REFRESHING REQUEST url=$requestUrl")
 
-            val refreshTokenRes = apiService.get()
-              .refreshToken(
-                RefreshTokenBody(
-                  refreshToken = currentUserLocal.refreshToken,
-                  username = currentUserLocal.username
-                )
-              )
+            val refreshTokenRes = apiService
+              .get()
+              .refreshToken(currentUserLocal.toRefreshTokenBody())
 
             when (val code = refreshTokenRes.code()) {
               HTTP_OK -> {
@@ -105,11 +102,16 @@ class AuthInterceptor @Inject constructor(
       .removeHeader(CUSTOM_HEADER)
       .build()
       .let(::proceed)
+
+  @Suppress("NOTHING_TO_INLINE")
+  private inline fun debug(s: String) = Timber.tag(LOG_TAG).d(s)
+
+  private companion object {
+    private val LOG_TAG = AuthInterceptor::class.java.simpleName
+  }
 }
 
-@Suppress("NOTHING_TO_INLINE")
-private inline fun debug(message: String) =
-  Timber.tag(AuthInterceptor::class.java.simpleName).d(message)
+private fun UserLocal.toRefreshTokenBody() = RefreshTokenBody(refreshToken, username)
 
 @Suppress("NOTHING_TO_INLINE")
 private inline fun String?.firstTwoCharactersAndLastTwoCharacters(): String? {
