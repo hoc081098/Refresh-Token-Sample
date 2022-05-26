@@ -7,13 +7,13 @@ plugins {
 }
 
 android {
-  compileSdkVersion 31
-  buildToolsVersion "31.0.0"
+  compileSdkVersion 32
+  buildToolsVersion "32.0.0"
 
   defaultConfig {
     applicationId "com.hoc081098.refreshtokensample"
     minSdkVersion 23
-    targetSdkVersion 31
+    targetSdkVersion 32
     final MAJOR = 1
     final MINOR = 2
     final PATCH = 0
@@ -38,7 +38,7 @@ android {
   }
 
   buildFeatures {
-    viewBinding = true
+    viewBinding true
   }
 }
 
@@ -64,7 +64,7 @@ dependencies {
   implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.1'
 
   implementation 'androidx.datastore:datastore:1.0.0'
-  implementation 'com.google.protobuf:protobuf-javalite:3.20.1'
+  implementation 'com.google.protobuf:protobuf-javalite:3.21.0'
   implementation "com.google.crypto.tink:tink-android:1.6.1"
 
   implementation "com.google.dagger:hilt-android:$hilt_version"
@@ -85,7 +85,7 @@ kapt {
 
 protobuf {
   protoc {
-    artifact = "com.google.protobuf:protoc:3.20.1"
+    artifact = "com.google.protobuf:protoc:3.21.0"
   }
 
   // Generates the java Protobuf-lite code for the Protobufs in this project. See

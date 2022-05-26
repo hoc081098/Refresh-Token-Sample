@@ -5,6 +5,7 @@ import com.hoc081098.refreshtokensample.data.local.UserLocal
 import com.hoc081098.refreshtokensample.data.local.UserLocalSource
 import com.hoc081098.refreshtokensample.data.remote.ApiService
 import com.hoc081098.refreshtokensample.data.remote.body.LoginBody
+import com.hoc081098.refreshtokensample.data.remote.response.LoginResponse
 import com.hoc081098.refreshtokensample.di.AppCoroutineScope
 import com.hoc081098.refreshtokensample.domain.AuthRepo
 import com.hoc081098.refreshtokensample.domain.User
@@ -30,14 +31,7 @@ class AuthRepoImpl @Inject constructor(
   private val userFlow by lazy {
     userLocalSource
       .user()
-      .map { userLocal ->
-        userLocal?.let {
-          User(
-            id = it.id!!,
-            username = it.username!!,
-          )
-        }
-      }
+      .map { it?.toUser() }
       .distinctUntilChanged()
   }
 
@@ -51,20 +45,26 @@ class AuthRepoImpl @Inject constructor(
       ),
     )
 
-    userLocalSource.update {
-      UserLocal.newBuilder()
-        .setId(response.id)
-        .setUsername(response.username)
-        .setToken(response.token)
-        .setRefreshToken(response.refreshToken)
-        .build()
-    }
+    userLocalSource.update { response.toUserLocal() }
 
     Unit
   }
 
   override suspend fun logout() = withContext(appDispatchers.io) {
     userLocalSource.update { null }
+
     Unit
   }
 }
+
+private fun LoginResponse.toUserLocal(): UserLocal = UserLocal.newBuilder()
+  .setId(id)
+  .setUsername(username)
+  .setToken(token)
+  .setRefreshToken(refreshToken)
+  .build()
+
+private fun UserLocal.toUser(): User = User(
+  id = id,
+  username = username,
+)

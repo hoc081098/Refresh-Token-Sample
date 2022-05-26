@@ -29,7 +29,7 @@ class AuthInterceptor @Inject constructor(
       return chain.proceedWithToken(request, null)
     }
 
-    val token = runBlocking { userLocalSource.user().first() }
+    val token = runBlocking(appDispatchers.io) { userLocalSource.user().first() }
       ?.token
       .also { debug("[2] READ TOKEN token=${it.firstTwoCharactersAndLastTwoCharacters()}, url=${request.url}") }
     val response = chain.proceedWithToken(request, token)
