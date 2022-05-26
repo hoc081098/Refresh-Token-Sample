@@ -1,19 +1,23 @@
 package com.hoc081098.refreshtokensample.data.local
 
 import androidx.datastore.core.DataStore
-import kotlinx.coroutines.flow.Flow
+import com.hoc081098.refreshtokensample.AppDispatchers
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.io.IOException
 import javax.inject.Inject
 
-class UserLocalSourceImpl @Inject constructor(private val dataStore: DataStore<UserLocal>) :
-  UserLocalSource {
-  override fun user(): Flow<UserLocal?> = dataStore.data
-    .onEach { Timber.d("User=$it") }
-    .map { if (it != USER_LOCAL_NULL) it else null }
+class UserLocalSourceImpl @Inject constructor(
+  private val dataStore: DataStore<UserLocal>,
+  private val appDispatchers: AppDispatchers,
+) : UserLocalSource {
+  override fun user() = dataStore.data
+    .onEach { Timber.d("userLocal=$it") }
+    .map { v -> v.takeIf { it != USER_LOCAL_NULL } }
     .catch { cause: Throwable ->
       if (cause is IOException) {
         emit(null)
@@ -21,15 +25,12 @@ class UserLocalSourceImpl @Inject constructor(private val dataStore: DataStore<U
         throw cause
       }
     }
+    .flowOn(appDispatchers.io)
 
-  override suspend fun save(userLocal: UserLocal?) {
-    dataStore.updateData {
-      if (userLocal === null) USER_LOCAL_NULL
-      else userLocal
+  override suspend fun update(transform: suspend (current: UserLocal?) -> UserLocal?) =
+    withContext(appDispatchers.io) {
+      dataStore.updateData { current ->
+        transform(current.takeIf { it != USER_LOCAL_NULL }) ?: USER_LOCAL_NULL
+      }
     }
-  }
-
-  companion object {
-    private val USER_LOCAL_NULL: UserLocal = UserLocal.getDefaultInstance()
-  }
 }

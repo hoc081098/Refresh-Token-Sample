@@ -12,8 +12,7 @@ import javax.inject.Inject
 class UserLocalSerializer @Inject constructor(
   private val crypto: Crypto
 ) : Serializer<UserLocal> {
-  override val defaultValue: UserLocal
-    get() = UserLocal.getDefaultInstance()
+  override val defaultValue: UserLocal get() = USER_LOCAL_NULL
 
   override suspend fun readFrom(input: InputStream): UserLocal {
     return try {
