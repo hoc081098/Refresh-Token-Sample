@@ -6,6 +6,7 @@ import com.hoc081098.refreshtokensample.domain.AuthRepo
 import com.hoc081098.refreshtokensample.domain.DemoRepo
 import com.hoc081098.refreshtokensample.domain.User
 import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.Channel
@@ -23,7 +24,6 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
-import javax.inject.Inject
 
 sealed interface MainAction {
   object Logout : MainAction
