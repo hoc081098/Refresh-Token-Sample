@@ -9,12 +9,12 @@ import com.hoc081098.refreshtokensample.data.remote.response.LoginResponse
 import com.hoc081098.refreshtokensample.di.AppCoroutineScope
 import com.hoc081098.refreshtokensample.domain.AuthRepo
 import com.hoc081098.refreshtokensample.domain.User
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import javax.inject.Inject
 
 class AuthRepoImpl @Inject constructor(
   private val userLocalSource: UserLocalSource,
