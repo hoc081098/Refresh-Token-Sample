@@ -2,28 +2,30 @@ package com.hoc081098.refreshtokensample
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.hoc081098.flowext.flatMapFirst
+import com.hoc081098.flowext.flowFromSuspend
+import com.hoc081098.flowext.startWith
 import com.hoc081098.refreshtokensample.domain.AuthRepo
 import com.hoc081098.refreshtokensample.domain.DemoRepo
 import com.hoc081098.refreshtokensample.domain.User
 import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
-import javax.inject.Inject
+import kotlinx.coroutines.launch
 
 sealed interface MainAction {
   object Logout : MainAction
@@ -54,41 +56,40 @@ class MainVM @Inject constructor(
     )
   val demoFlow: StateFlow<Lce<String>>
 
-  private val actions = Channel<MainAction>(Channel.UNLIMITED)
-  private val events = Channel<MainSingleEvent>(Channel.UNLIMITED)
+  private val actionsFlow = MutableSharedFlow<MainAction>(extraBufferCapacity = 1)
+  private val eventsChannel = Channel<MainSingleEvent>(Channel.UNLIMITED)
 
   fun dispatch(action: MainAction) {
-    actions.trySend(action)
+    viewModelScope.launch {
+      actionsFlow.emit(action)
+    }
   }
 
-  val eventFlow: Flow<MainSingleEvent> get() = events.receiveAsFlow()
+  val eventFlow: Flow<MainSingleEvent> get() = eventsChannel.receiveAsFlow()
 
   init {
-    val actionsFlow =
-      actions.consumeAsFlow().shareIn(viewModelScope, SharingStarted.WhileSubscribed())
-
     actionsFlow
       .filterIsInstance<MainAction.Logout>()
-      .flatMapMerge {
-        repo::logout.asFlow()
-          .catch { events.send(MainSingleEvent.LogoutFailed(it)) }
+      .flatMapFirst {
+        flowFromSuspend(repo::logout)
+          .catch { eventsChannel.send(MainSingleEvent.LogoutFailed(it)) }
       }
       .launchIn(viewModelScope)
 
     actionsFlow
       .filterIsInstance<MainAction.Login>()
-      .flatMapMerge {
-        repo::login.asFlow()
-          .catch { events.send(MainSingleEvent.LoginFailed(it)) }
+      .flatMapFirst {
+        flowFromSuspend(repo::login)
+          .catch { eventsChannel.send(MainSingleEvent.LoginFailed(it)) }
       }
       .launchIn(viewModelScope)
 
     demoFlow = actionsFlow
       .filterIsInstance<MainAction.Demo>()
       .flatMapMerge {
-        demoRepo::demo.asFlow()
+        flowFromSuspend(demoRepo::demo)
           .map { Lce.content(it) }
-          .onStart { emit(Lce.loading()) }
+          .startWith(Lce.loading())
           .catch { emit(Lce.error(it)) }
       }
       .stateIn(

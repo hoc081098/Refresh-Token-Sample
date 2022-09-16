@@ -7,16 +7,16 @@ import com.hoc081098.refreshtokensample.data.remote.ApiService
 import com.hoc081098.refreshtokensample.data.remote.ApiService.Factory.CUSTOM_HEADER
 import com.hoc081098.refreshtokensample.data.remote.ApiService.Factory.NO_AUTH
 import com.hoc081098.refreshtokensample.data.remote.body.RefreshTokenBody
+import java.net.HttpURLConnection.HTTP_OK
+import java.net.HttpURLConnection.HTTP_UNAUTHORIZED
+import javax.inject.Inject
+import javax.inject.Provider
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response
 import timber.log.Timber
-import java.net.HttpURLConnection.HTTP_OK
-import java.net.HttpURLConnection.HTTP_UNAUTHORIZED
-import javax.inject.Inject
-import javax.inject.Provider
 
 class AuthInterceptor @Inject constructor(
   private val userLocalSource: UserLocalSource,
